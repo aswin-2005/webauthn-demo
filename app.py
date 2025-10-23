@@ -24,6 +24,7 @@ def index():
 def register_request():
     challenge = generate_challenge()
     session["challenge"] = challenge
+    print("Generated challenge for registration:", challenge)
     return jsonify({
         "challenge": challenge,
         "user": {"id": "demo-user", "name": "Demo User", "displayName": "Demo User"}
@@ -34,6 +35,8 @@ def register_response():
     data = request.json
     public_key_pem = data["publicKeyPem"]
     user_store["public_key"] = public_key_pem
+    print("Stored public key for user.")
+    print("Public Key PEM:", public_key_pem)
     return jsonify({"status": "ok"})
 
 # ---------------- Login / Auth ----------------
@@ -41,6 +44,7 @@ def register_response():
 def login_request():
     challenge = generate_challenge()
     session["challenge"] = challenge
+    print("Generated challenge for login:", challenge)
     return jsonify({"challenge": challenge})
 
 @app.route("/login_response", methods=["POST"])
@@ -49,9 +53,14 @@ def login_response():
     public_key_pem = user_store.get("public_key")
     if not public_key_pem:
         return jsonify({"status": "fail", "error": "No registered device"}), 400
+    
+    print("Verifying signature with stored public key.")
+    print("Public Key PEM:", public_key_pem)
 
     public_key = serialization.load_pem_public_key(public_key_pem.encode())
+    print("Loaded public key:", public_key)
     challenge = base64.urlsafe_b64decode(session["challenge"] + "==")
+    print("Challenge from session:", challenge)
     signature_bytes = bytes(data["signature"])
 
     try:
